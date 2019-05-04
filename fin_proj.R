@@ -16,6 +16,8 @@ nhanesi_df$frequent_drinker = ifelse(nhanesi_df$alcohol.consumption == "2+ times
 nhanesi_df <- subset(nhanesi_df, select = -c(alcohol.consumption))
 nhanesi_df <- subset(nhanesi_df, select = -c(sex, race))
 
+nhanesi_df <- nhanesi_df[nhanesi_df$age.at.interview>44,]
+
 # fitting the model 
 propscore.model=glm(frequent_drinker~smoking + age.at.interview+
                       exercise + bmi + education + poverty.index + working.last.three.months +
@@ -214,3 +216,5 @@ controlmean.after=apply(controlmat.after,2,mean);
 # Standardized differences after matching
 stand.diff.after=(treatmean-controlmean.after)/sqrt((treatvar+controlvar)/2);
 cbind(stand.diff.before,stand.diff.after)
+
+
