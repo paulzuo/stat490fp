@@ -66,14 +66,26 @@ nhanesi_df$prop_score <- propscore.model$fitted.values
 
 ## CART
 library(tree)
+library(rpart)
+# grow tree 
+fit <- rpart(frequent_drinker~smoking + age.at.interview+
+  exercise + bmi + education + poverty.index + working.last.three.months +
+  married + dietary.adequacy + rural + female + white,
+             method="class", data=nhanesi_df)
+summary(fit)
+nhanesi_df$logit.ps <- log(predict(fit, nhanesi_df)[,2])
+nhanesi_df$prop_score <- predict(fit, nhanesi_df)[,2]
+
+## PRUNED CART
+
 
 
 ### matching
 library(pairwise)
 library(optmatch)
 
-nhanesi_df$treated <- propscore.model$y
-nhanesi_df$logit.ps <- predict(propscore.model)
+#nhanesi_df$treated <- propscore.model$y
+#nhanesi_df$logit.ps <- predict(propscore.model)
 treated <- nhanesi_df$treated
 
 smahal=
