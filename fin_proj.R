@@ -76,8 +76,8 @@ summary(fit)
 nhanesi_df$logit.ps <- log(predict(fit, nhanesi_df)[,2])
 nhanesi_df$prop_score <- predict(fit, nhanesi_df)[,2]
 
-## PRUNED CART
-
+## PRUNED CART - doesn't do anything?
+prune(fit, cp=0.01160389)
 
 
 ### matching
