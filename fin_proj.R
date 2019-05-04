@@ -6,3 +6,7 @@ nhanesi_df <- subset(nhanesi_df, select = -c(X.1, X))
 nhanesi_df <- subset(nhanesi_df, select = -c(SEQN))
 nhanesi_df$age_lived_since_1971 <- nhanesi_df$yr.death.expanded - 71
 nhanesi_df <- subset(nhanesi_df, select = -c(yr.death.expanded))
+
+#columns to drop:
+# educ.2cat, death, educ.3cat, baseline, dietary.adequacy.missing, poverty.index.missing, cause.death, followup.time, censored, diabetes
+nhanesi_df <- subset(nhanesi_df, select = -c(educ.2cat, death, educ.3cat, baseline.disease, dietary.adequacy.missing, poverty.index.missing, cause.death, followup.time, censored, diabetes))
