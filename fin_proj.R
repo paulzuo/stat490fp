@@ -95,6 +95,7 @@ nhanesi_df$prop_score <- predict(propscore.model, nhanesi_df[,1:15], type = "pro
 ## BOOSTED TREES
 install.packages("twang")
 library(twang)
+library(gbm)
 propscore.model = mnps(as.factor(frequent_drinker)~smoking + age.at.interview+
        exercise + bmi + education + poverty.index + working.last.three.months +
        married + dietary.adequacy + rural + female + white, data = nhanesi_df)
@@ -109,6 +110,7 @@ propscore.model = gbm(frequent_drinker~smoking + age.at.interview+
                       distribution = "bernoulli",n.trees = 10000,
     shrinkage = 0.01, interaction.depth = 4)
 summary(propscore.model)
+library(ggplot2)
 nhanesi_df$prop_score <- predict(propscore.model, n.trees = 10000, type = "response")
 summary(nhanesi_df$prop_score)
 nhanesi_df$logit.ps <- log(nhanesi_df$prop_score)
@@ -217,4 +219,16 @@ controlmean.after=apply(controlmat.after,2,mean);
 stand.diff.after=(treatmean-controlmean.after)/sqrt((treatvar+controlvar)/2);
 cbind(stand.diff.before,stand.diff.after)
 
+library(ggplot2)  
+# NOT absolute valued
+covariates=names(stand.diff.before[-1])
+stand.diff=c(stand.diff.before[-1],stand.diff.after[-1])
+plot.dataframe=data.frame(stand.diff,covariates=rep(covariates,2),type=c(rep("Before",length(covariates)),rep("After",length(covariates))))
+ggplot(plot.dataframe,aes(x=stand.diff,y=covariates))+geom_point(size=5,aes(shape=factor(type)))+scale_shape_manual(values=c(4,1))+geom_vline(xintercept=c(-0.2,.2),lty=2)
 
+# absolute valued
+abs.stand.diff.before=abs(stand.diff.before[-1])
+abs.stand.diff.after=abs(stand.diff.after[-1])
+covariates=names(stand.diff.before[-1])
+plot.dataframe=data.frame(abs.stand.diff=c(abs.stand.diff.before,abs.stand.diff.after),covariates=rep(covariates,2),type=c(rep("Before",length(covariates)),rep("After",length(covariates))))
+ggplot(plot.dataframe,aes(x=abs.stand.diff,y=covariates))+geom_point(size=5,aes(shape=factor(type)))+scale_shape_manual(values=c(4,1))+geom_vline(xintercept=c(.1,.2),lty=2)
