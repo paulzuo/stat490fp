@@ -79,7 +79,38 @@ nhanesi_df$prop_score <- predict(fit, nhanesi_df)[,2]
 ## PRUNED CART - doesn't do anything?
 prune(fit, cp=0.01160389)
 
+## RANDOM FOREST
+require(randomForest)
+propscore.model = randomForest(y=as.factor(nhanesi_df$frequent_drinker), 
+             x = nhanesi_df[, -c(15:20)], 
+             ytest = as.factor(nhanesi_df$frequent_drinker), 
+             xtest = nhanesi_df[,-c(15:20)], 
+             ntree = 100, mtry = 6, keep.forest = TRUE)
+varImpPlot(propscore.model)
+nhanesi_df$logit.ps <- log(predict(propscore.model, nhanesi_df[,1:15], type = "prob")[,2]+0.000000000000000001)
+nhanesi_df$prop_score <- predict(propscore.model, nhanesi_df[,1:15], type = "prob")[,2]+0.000000000000000001
 
+## BOOSTED TREES
+install.packages("twang")
+library(twang)
+propscore.model = mnps(as.factor(frequent_drinker)~smoking + age.at.interview+
+       exercise + bmi + education + poverty.index + working.last.three.months +
+       married + dietary.adequacy + rural + female + white, data = nhanesi_df)
+nhanesi_df$smoking <- as.numeric(nhanesi_df$smoking)
+nhanesi_df$working.last.three.months <- as.numeric(nhanesi_df$working.last.three.months)
+nhanesi_df$married <- as.numeric(nhanesi_df$married)
+nhanesi_df$rural <- as.numeric(nhanesi_df$rural)
+
+propscore.model = gbm(frequent_drinker~smoking + age.at.interview+
+                        exercise + bmi + education + poverty.index + working.last.three.months +
+                        married + dietary.adequacy + rural + female + white,data = nhanesi_df,
+                      distribution = "bernoulli",n.trees = 10000,
+    shrinkage = 0.01, interaction.depth = 4)
+summary(propscore.model)
+nhanesi_df$prop_score <- predict(propscore.model, n.trees = 10000, type = "response")
+summary(nhanesi_df$prop_score)
+nhanesi_df$logit.ps <- log(nhanesi_df$prop_score)
+## Boosting 
 ### matching
 library(pairwise)
 library(optmatch)
@@ -167,6 +198,7 @@ matched.control.subject.index=matched.control.subject.index.mat
 # Calculate standardized differences 
 # Covariates used in propensity score model
 Xmat=propscore.model$x;
+# when using RF... use same Xmat as log reg
 
 # Standardized differences before matching
 controlmat.before=Xmat[treated==0,];
