@@ -226,6 +226,41 @@ controlmean.after=apply(controlmat.after,2,mean);
 stand.diff.after=(treatmean-controlmean.after)/sqrt((treatvar+controlvar)/2);
 cbind(stand.diff.before,stand.diff.after)
 
+# weighting...
+
+w_control.mat.before = controlmat.before*nhanesi_df[treated==0,]$prop_score
+w_treatedmat = treatedmat*nhanesi_df[treated==1,]$prop_score
+w_controlmat.after = controlmat.after*nhanesi_df[matched.control.subject.index,]$prop_score
+# control matrix before
+w_controlmean.before=apply(w_control.mat.before,2,sum,na.rm=TRUE)
+w_controlmean.before = w_controlmean.before / sum(nhanesi_df[treated==0,]$prop_score)
+mf = sum(nhanesi_df[treated==0,]$prop_score)/(sum(nhanesi_df[treated==0,]$prop_score)^2 - sum(nhanesi_df[treated==0,]$prop_score^2))
+w_controlvar = apply(w_control.mat.before,2,var,na.rm=TRUE);
+for (i in 1:18){
+  w_controlvar[i] = mf*sum(((w_control.mat.before[,i]-w_controlmean.before[i])^2)*nhanesi_df[treated==0,]$prop_score)
+}
+# treatment matrix
+w_treatmean = apply(w_treatedmat,2,sum,na.rm=TRUE)
+w_treatmean = w_treatmean / sum(nhanesi_df[treated==1,]$prop_score)
+mf = sum(nhanesi_df[treated==1,]$prop_score)/(sum(nhanesi_df[treated==1,]$prop_score)^2 - sum(nhanesi_df[treated==1,]$prop_score^2))
+w_treatvar = apply(w_treatedmat,2,var,na.rm=TRUE);
+for (i in 1:18){
+  w_treatvar[i] = mf*sum(((w_treatedmat[,i]-w_treatmean[i])^2)*nhanesi_df[treated==1,]$prop_score)
+}
+
+# control matrix after
+w_controlmean.after=apply(w_controlmat.after,2,sum,na.rm=TRUE)
+w_controlmean.after = w_controlmean.after / sum(nhanesi_df[treated==0,]$prop_score)
+w_controlvar.after = apply(w_controlmat.after,2,var,na.rm=TRUE);
+mf = sum(nhanesi_df[treated==0,]$prop_score)/(sum(nhanesi_df[treated==0,]$prop_score)^2 - sum(nhanesi_df[treated==0,]$prop_score^2))
+for (i in 1:18){
+  w_controlvar.after[i] = mf*sum(((w_controlmat.after[,i]-w_controlmean.after[i])^2)*nhanesi_df[treated==0,]$prop_score)
+}
+
+stand.diff.before=(w_treatmean-w_controlmean.before)/sqrt((w_treatvar+w_controlvar)/2);
+stand.diff.after=(w_treatmean-w_controlmean.after)/sqrt((w_treatvar+w_controlvar.after)/2);
+cbind(stand.diff.before,stand.diff.after)
+
 abs(treatmean - controlmean.after)/abs(treatmean - controlmean.before)
 bias_reductions <- ((abs(treatmean - controlmean.before) - abs(treatmean - controlmean.after))/abs(treatmean - controlmean.before))[2:18]
 covs <- c("smoking", "age", "ex.mod", "ex.much", "bmi", "educ12",
