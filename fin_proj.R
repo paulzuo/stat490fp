@@ -226,6 +226,17 @@ controlmean.after=apply(controlmat.after,2,mean);
 stand.diff.after=(treatmean-controlmean.after)/sqrt((treatvar+controlvar)/2);
 cbind(stand.diff.before,stand.diff.after)
 
+abs(treatmean - controlmean.after)/abs(treatmean - controlmean.before)
+bias_reductions <- ((abs(treatmean - controlmean.before) - abs(treatmean - controlmean.after))/abs(treatmean - controlmean.before))[2:18]
+covs <- c("smoking", "age", "ex.mod", "ex.much", "bmi", "educ12",
+          "educ9-11", "educColl", "noEduc", "educSomeColl", 
+          "pov.idx", "working", "married", "dietAdeq", "rural",
+          "female", "white")
+covs_biases <- data.frame("confounders" = covs, "biases" = biases, stringsAsFactors = FALSE)
+p<-ggplot(data=covs_biases, aes(x=covs, y=bias_reductions)) +
+  geom_bar(stat="identity")
+p
+
 library(ggplot2)  
 # NOT absolute valued
 covariates=names(stand.diff.before[-1])
@@ -262,5 +273,5 @@ summary(nhanesi_df$wt)
 ## wilcoxon signed rank test
 library(exactRankTests)
 indices_test <- cbind(matched.control.subject.index, treated.subject.index)
-wilcox.exact(nhanesi_df[indices_test[,2],]$age_lived_since_1971,nhanesi_df[indices_test[,1],]$age_lived_since_1971,alternative="less",paired=TRUE,conf.int=TRUE)
+wilcox.exact(nhanesi_df[indices_test[,2],]$age_lived_since_1971,nhanesi_df[indices_test[,1],]$age_lived_since_1971,alternative="two.sided",paired=TRUE,conf.int=TRUE)
 
