@@ -84,9 +84,9 @@ prune(fit, cp=0.01160389)
 ## RANDOM FOREST
 require(randomForest)
 propscore.model = randomForest(y=as.factor(nhanesi_df$frequent_drinker), 
-             x = nhanesi_df[, -c(15:20)], 
+             x = nhanesi_df[, -c(15:21)], 
              ytest = as.factor(nhanesi_df$frequent_drinker), 
-             xtest = nhanesi_df[,-c(15:20)], 
+             xtest = nhanesi_df[,-c(15:21)], 
              ntree = 100, mtry = 6, keep.forest = TRUE)
 varImpPlot(propscore.model)
 nhanesi_df$logit.ps <- log(predict(propscore.model, nhanesi_df[,1:15], type = "prob")[,2]+0.000000000000000001)
@@ -109,8 +109,15 @@ propscore.model = gbm(frequent_drinker~smoking + age.at.interview+
                         married + dietary.adequacy + rural + female + white,data = nhanesi_df,
                       distribution = "bernoulli",n.trees = 10000,
     shrinkage = 0.01, interaction.depth = 4)
-summary(propscore.model)
+abc = summary(propscore.model)
+abc$var
+abc$rel.inf
 library(ggplot2)
+# plot importances
+p<-ggplot(data=abc, aes(x=var, y=rel.inf)) +
+  geom_bar(stat="identity")
+p
+
 nhanesi_df$prop_score <- predict(propscore.model, n.trees = 10000, type = "response")
 summary(nhanesi_df$prop_score)
 nhanesi_df$logit.ps <- log(nhanesi_df$prop_score)
@@ -232,3 +239,28 @@ abs.stand.diff.after=abs(stand.diff.after[-1])
 covariates=names(stand.diff.before[-1])
 plot.dataframe=data.frame(abs.stand.diff=c(abs.stand.diff.before,abs.stand.diff.after),covariates=rep(covariates,2),type=c(rep("Before",length(covariates)),rep("After",length(covariates))))
 ggplot(plot.dataframe,aes(x=abs.stand.diff,y=covariates))+geom_point(size=5,aes(shape=factor(type)))+scale_shape_manual(values=c(4,1))+geom_vline(xintercept=c(.1,.2),lty=2)
+
+### weighted regression
+nhanesi_df$wt <- ifelse(nhanesi_df$frequent_drinker == 1, 1/nhanesi_df$prop_score, 1/(1-nhanesi_df$prop_score))
+model <- lm(age_lived_since_1971 ~ frequent_drinker + smoking + age.at.interview+
+              exercise + bmi + education + poverty.index + working.last.three.months +
+              married + dietary.adequacy + rural + female + white, data=nhanesi_df, weights = nhanesi_df$wt)
+summary(model)
+summary(nhanesi_df$wt)
+
+### Procedure thus far...
+# Form optimal matched pairs using rank based Mahalanobis distance with a propensity
+# score caliper, using the following prognostically important variables in the Mahalanobis
+# distance – smoking status, sex and age at time of interview.  Assess the balance on the
+# confounders between the treated and control matched pairs.  
+# Compare the balance between the matched pairs with the balance between the unmatched
+# treated and control groups.  Construct a Love plot.  Construct a different Love plot 
+# that has the standardized difference (rather than absolute standardized difference) on the 
+# x-axis.  Add vertical lines to indicate standardized differences of -0.2 and 0.2 using the
+# geom_vline function in the ggplot2 library.
+
+## wilcoxon signed rank test
+library(exactRankTests)
+indices_test <- cbind(matched.control.subject.index, treated.subject.index)
+wilcox.exact(nhanesi_df[indices_test[,2],]$age_lived_since_1971,nhanesi_df[indices_test[,1],]$age_lived_since_1971,alternative="less",paired=TRUE,conf.int=TRUE)
+
