@@ -226,39 +226,42 @@ controlmean.after=apply(controlmat.after,2,mean);
 stand.diff.after=(treatmean-controlmean.after)/sqrt((treatvar+controlvar)/2);
 cbind(stand.diff.before,stand.diff.after)
 
-# weighting...
+### WEIGHTING... ###
+w_controls_before = 1/(1-nhanesi_df[treated==0,]$prop_score)
+w_treatment = 1/nhanesi_df[treated==1,]$prop_score
+#w_controls_after = 1/(1-nhanesi_df[matched.control.subject.index,]$prop_score)
 
-w_control.mat.before = controlmat.before*nhanesi_df[treated==0,]$prop_score
-w_treatedmat = treatedmat*nhanesi_df[treated==1,]$prop_score
-w_controlmat.after = controlmat.after*nhanesi_df[matched.control.subject.index,]$prop_score
+w_control.mat.before = controlmat.before*w_controls_before
+w_treatedmat = treatedmat*w_treatment
+#w_controlmat.after = controlmat.after*w_controls_after
 # control matrix before
 w_controlmean.before=apply(w_control.mat.before,2,sum,na.rm=TRUE)
-w_controlmean.before = w_controlmean.before / sum(nhanesi_df[treated==0,]$prop_score)
-mf = sum(nhanesi_df[treated==0,]$prop_score)/(sum(nhanesi_df[treated==0,]$prop_score)^2 - sum(nhanesi_df[treated==0,]$prop_score^2))
+w_controlmean.before = w_controlmean.before / sum(w_controls_before)
+mf = sum(w_controls_before)/(sum(w_controls_before)^2 - sum(w_controls_before^2))
 w_controlvar = apply(w_control.mat.before,2,var,na.rm=TRUE);
 for (i in 1:18){
-  w_controlvar[i] = mf*sum(((w_control.mat.before[,i]-w_controlmean.before[i])^2)*nhanesi_df[treated==0,]$prop_score)
+  w_controlvar[i] = mf*sum(((w_control.mat.before[,i]-w_controlmean.before[i])^2)*w_controls_before)
 }
 # treatment matrix
 w_treatmean = apply(w_treatedmat,2,sum,na.rm=TRUE)
-w_treatmean = w_treatmean / sum(nhanesi_df[treated==1,]$prop_score)
-mf = sum(nhanesi_df[treated==1,]$prop_score)/(sum(nhanesi_df[treated==1,]$prop_score)^2 - sum(nhanesi_df[treated==1,]$prop_score^2))
+w_treatmean = w_treatmean / sum(w_treatment)
+mf = sum(w_treatment)/(sum(w_treatment)^2 - sum(w_treatment^2))
 w_treatvar = apply(w_treatedmat,2,var,na.rm=TRUE);
 for (i in 1:18){
-  w_treatvar[i] = mf*sum(((w_treatedmat[,i]-w_treatmean[i])^2)*nhanesi_df[treated==1,]$prop_score)
+  w_treatvar[i] = mf*sum(((w_treatedmat[,i]-w_treatmean[i])^2)*w_treatment)
 }
 
 # control matrix after
-w_controlmean.after=apply(w_controlmat.after,2,sum,na.rm=TRUE)
-w_controlmean.after = w_controlmean.after / sum(nhanesi_df[treated==0,]$prop_score)
-w_controlvar.after = apply(w_controlmat.after,2,var,na.rm=TRUE);
-mf = sum(nhanesi_df[treated==0,]$prop_score)/(sum(nhanesi_df[treated==0,]$prop_score)^2 - sum(nhanesi_df[treated==0,]$prop_score^2))
-for (i in 1:18){
-  w_controlvar.after[i] = mf*sum(((w_controlmat.after[,i]-w_controlmean.after[i])^2)*nhanesi_df[treated==0,]$prop_score)
-}
+#w_controlmean.after=apply(w_controlmat.after,2,sum,na.rm=TRUE)
+#w_controlmean.after = w_controlmean.after / sum(w_controls_after)
+#w_controlvar.after = apply(w_controlmat.after,2,var,na.rm=TRUE);
+#mf = sum(w_controls_after)/(sum(w_controls_after)^2 - sum(w_controls_after^2))
+#for (i in 1:18){
+#  w_controlvar.after[i] = mf*sum(((w_controlmat.after[,i]-w_controlmean.after[i])^2)*w_controls_after)
+#}
 
-stand.diff.before=(w_treatmean-w_controlmean.before)/sqrt((w_treatvar+w_controlvar)/2);
-stand.diff.after=(w_treatmean-w_controlmean.after)/sqrt((w_treatvar+w_controlvar.after)/2);
+#stand.diff.before=(w_treatmean-w_controlmean.before)/sqrt((w_treatvar+w_controlvar)/2);
+stand.diff.after=(w_treatmean-w_controlmean.before)/sqrt((w_treatvar+w_controlvar)/2);
 cbind(stand.diff.before,stand.diff.after)
 
 abs(treatmean - controlmean.after)/abs(treatmean - controlmean.before)
